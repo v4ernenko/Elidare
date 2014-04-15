@@ -35,6 +35,8 @@ Supported methods:
 - `setEnabled(enabled)` Sets or clears the `disabled` state on the view.
 - `handleEvent(DOMEvent)` Handles DOM events.
 
+View inherits from Emitter, so all emitter methods apply.
+
 Example:
 
 ```css
@@ -78,6 +80,8 @@ Supported methods:
 - `hasProperty(name)` Returns `true` if the model has given property.
 - `getProperty([name])` Returns the value of a property or all properties if `name` is not passed.
 - `setProperty(name [, value] [, options])` Sets or removes properties. To delete a property set the `value` to `null` or `undefined`.
+
+Model inherits from Emitter, so all emitter methods apply.
 
 Supported options:
 
