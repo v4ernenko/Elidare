@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.0.2
+* @version 0.1.0
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -170,12 +170,12 @@ var elidare = (function (win, doc, undefined) {
     };
 
     if (doc.addEventListener) {
-        util.bind = function (element, type, handler) {
-            element.addEventListener(type, handler, false);
+        util.bind = function (element, type, listener) {
+            element.addEventListener(type, listener, false);
         };
 
-        util.unbind = function (element, type, handler) {
-            element.removeEventListener(type, handler, false);
+        util.unbind = function (element, type, listener) {
+            element.removeEventListener(type, listener, false);
         };
     } else if (win.attachEvent) {
         (function () {
@@ -260,7 +260,6 @@ var elidare = (function (win, doc, undefined) {
                 }
 
                 element.detachEvent('on' + type, storage[i].wrapper);
-
                 storage.splice(i, 1);
             };
 
@@ -363,7 +362,6 @@ var elidare = (function (win, doc, undefined) {
 
             function onceHandler() {
                 that.off(type, onceHandler, context);
-
                 handler.apply(this, arguments);
             }
 
@@ -396,30 +394,17 @@ var elidare = (function (win, doc, undefined) {
 
     var View = Emitter.extend({
         init: function (params) {
-            params || (params = {});
+            params = params || {};
 
-            var i, type,
-                element = this._element = params.element || doc.createElement('div');
+            var element = this._element = params.element || doc.createElement('div');
 
             this._id = element.id || util.generateId('vid');
-            this._DOMEvents = [];
+            this._DOMEvents = {};
             this._statePrefix = params.statePrefix || 'state-';
             this._contentElement = params.contentElement || element;
 
             if (params.DOMEvents) {
-                if (util.isArray(params.DOMEvents)) {
-                    this._DOMEvents = params.DOMEvents;
-                } else if (util.isObject(params.DOMEvents)) {
-                    for (type in params.DOMEvents) {
-                        this._DOMEvents.push(type);
-                    }
-                } else if (util.isString(params.DOMEvents)) {
-                    this._DOMEvents = util.trim(params.DOMEvents).split(/\s+/);
-                }
-
-                for (i = 0; type = this._DOMEvents[i]; i++) {
-                    util.bind(element, type, this);
-                }
+                this.bindDOMEvents(params.DOMEvents);
             }
         },
 
@@ -428,7 +413,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         destroy: function () {
-            var i, type, element = this._element;
+            var type, element = this._element;
 
             if (!element) {
                 return this;
@@ -436,11 +421,11 @@ var elidare = (function (win, doc, undefined) {
 
             this.off();
 
-            for (i = 0; type = this._DOMEvents; i++) {
+            for (type in this._DOMEvents) {
                 util.unbind(element, type, this);
             }
 
-            this._DOMEvents = [];
+            this._DOMEvents = {};
 
             if (element.parentNode) {
                 element.parentNode.removeChild(element);
@@ -516,6 +501,37 @@ var elidare = (function (win, doc, undefined) {
 
         handleEvent: function (DOMEvent) {
             this.emit(DOMEvent.type, DOMEvent);
+        },
+
+        bindDOMEvents: function (types) {
+            var i,
+                type,
+                list = [],
+                element = this._element,
+                DOMEvents = this._DOMEvents;
+
+            if (!element) {
+                return this;
+            }
+
+            if (util.isArray(types)) {
+                list = types;
+            } else if (util.isObject(types)) {
+                for (type in types) {
+                    list.push(type);
+                }
+            } else if (util.isString(types)) {
+                list = util.trim(types).split(/\s+/);
+            }
+
+            for (i = 0; type = list[i]; i++) {
+                if (!DOMEvents[type]) {
+                    DOMEvents[type] = true;
+                    util.bind(element, type, this);
+                }
+            }
+
+            return this;
         }
     });
 
@@ -523,7 +539,7 @@ var elidare = (function (win, doc, undefined) {
 
     var Model = Emitter.extend({
         init: function (props, options) {
-            options || (options = {});
+            options = options || {};
 
             this._id = options.id || util.generateId('mid');
             this._props = {};
