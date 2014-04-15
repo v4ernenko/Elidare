@@ -1,7 +1,7 @@
 /**
-* @overview Yet another MVP framework.
+* @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.0.1
+* @version 0.0.2
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -404,7 +404,7 @@ var elidare = (function (win, doc, undefined) {
             this._id = element.id || util.generateId('vid');
             this._DOMEvents = [];
             this._statePrefix = params.statePrefix || 'state-';
-            this._contentWrapper = params.contentWrapper || element;
+            this._contentElement = params.contentElement || element;
 
             if (params.DOMEvents) {
                 if (util.isArray(params.DOMEvents)) {
@@ -446,7 +446,7 @@ var elidare = (function (win, doc, undefined) {
                 element.parentNode.removeChild(element);
             }
 
-            this._element = this._contentWrapper = null;
+            this._element = this._contentElement = null;
 
             return this;
         },
@@ -461,24 +461,24 @@ var elidare = (function (win, doc, undefined) {
             return util.hasClass(element, this._statePrefix + name);
         },
 
-        setState: function (name, value) {
+        setState: function (name, enable) {
             var element = this._element;
 
             if (!element) {
                 return this;
             }
 
-            value = !!value;
+            enable = !!enable;
 
-            if (this.hasState(name) === value) {
+            if (this.hasState(name) === enable) {
                 return this;
             }
 
-            util.toggleClass(element, this._statePrefix + name, value);
+            util.toggleClass(element, this._statePrefix + name, enable);
 
             this
-                .emit('stateChanged', name, value)
-                .emit('stateChanged:' + name, value);
+                .emit('stateChanged', name, enable)
+                .emit('stateChanged:' + name, enable);
 
             return this;
         },
@@ -496,10 +496,10 @@ var elidare = (function (win, doc, undefined) {
         },
 
         setContent: function (content, escapeHTML) {
-            var contentWrapper = this._contentWrapper;
+            var contentElement = this._contentElement;
 
-            if (contentWrapper) {
-                contentWrapper.innerHTML = escapeHTML ?
+            if (contentElement) {
+                contentElement.innerHTML = escapeHTML ?
                     util.escapeHTML(content) : content;
             }
 

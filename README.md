@@ -1,6 +1,6 @@
 # Elidare
 
-Yet another MVP framework.
+A library for building modular applications in JavaScript.
 
 ## Overview
 
