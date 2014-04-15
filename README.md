@@ -17,7 +17,7 @@ This class is designed for manipulating DOM elements.
 All params are optional. Supported params:
 
 - `element` DOM element (default: `DIV`).
-- `DOMEvents` Whitespace-separated string, array or object of event types that are attached to the element (default: `[]`).
+- `DOMEvents` Whitespace-separated string, array or object of event types that are attached to the element.
 - `statePrefix` Prefix for element class names which is related to the element states (default: `state-`).
 - `contentElement` Content wrapper (default: `element`).
 
@@ -27,13 +27,14 @@ Supported methods:
 - `destroy()` Removes the view's element from the DOM.
 - `hasState(name)` Returns `true` if the view is in the specified state, `false` otherwise.
 - `setState(name, enable)` Sets or clears the given state on the view.
-- `isVisible()` Returns `true` if the view has a `hidden` state, `false` otherwise.
-- `isEnabled()` Returns `true` if the view has a `disabled` state, `false` otherwise.
+- `isVisible()` Returns `false` if the view has a `hidden` state, `true` otherwise.
+- `isEnabled()` Returns `false` if the view has a `disabled` state, `true` otherwise.
 - `getElement()` Gets the view's element.
 - `setContent(content [, escapeHTML])` Sets the view's content. If `contentElement` is defined, content is rendered into it.
 - `setVisible(visible)` Sets or clears the `hidden` state on the view.
 - `setEnabled(enabled)` Sets or clears the `disabled` state on the view.
 - `handleEvent(DOMEvent)` Handles DOM events.
+- `bindDOMEvents(types)` Binds DOM events.
 
 View inherits from Emitter, so all emitter methods apply.
 
@@ -134,8 +135,22 @@ Each class has a static `extend` method and allows you to define your own classe
 
 ```js
 var FocusableView = elidare.View.extend({
-    init: function () {
-        alert('New focusable view is created!');
+    init: function (params) {
+        params = params || {};
+
+        var element = this.getElement(),
+            tabIndex = params.tabIndex || 0;
+
+        element.setAttribute('tabindex', tabIndex);
+
+        this
+            .on('blur', function () {
+                this.setFocused(false);
+            }, this)
+            .on('focus', function () {
+                this.setFocused(true);
+            }, this)
+            .bindDOMEvents('blur focus');
     },
 
     blur: function () {
@@ -148,6 +163,14 @@ var FocusableView = elidare.View.extend({
         window.setTimeout(function () {
             element.focus();
         }, 0);
+    },
+
+    isFocused: function () {
+        return this.hasState('focused');
+    },
+
+    setFocused: function (focused) {
+        this.setState('focused', focused);
     }
 });
 ```
