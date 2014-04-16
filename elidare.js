@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.1.0
+* @version 0.2.0
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -62,6 +62,14 @@ var elidare = (function (win, doc, undefined) {
             }
 
             return target;
+        },
+
+        isEqual: Object.is || function (x, y) {
+            if (x === y) {
+                return x !== 0 || 1 / x === 1 / y;
+            }
+
+            return x !== x && y !== y;
         },
 
         isArray: Array.isArray || function (value) {
@@ -413,19 +421,13 @@ var elidare = (function (win, doc, undefined) {
         },
 
         destroy: function () {
-            var type, element = this._element;
+            var element = this._element;
 
             if (!element) {
                 return this;
             }
 
-            this.off();
-
-            for (type in this._DOMEvents) {
-                util.unbind(element, type, this);
-            }
-
-            this._DOMEvents = {};
+            this.unbindDOMEvents().off();
 
             if (element.parentNode) {
                 element.parentNode.removeChild(element);
@@ -525,11 +527,27 @@ var elidare = (function (win, doc, undefined) {
             }
 
             for (i = 0; type = list[i]; i++) {
-                if (!DOMEvents[type]) {
-                    DOMEvents[type] = true;
-                    util.bind(element, type, this);
-                }
+                if (DOMEvents[type]) continue;
+
+                DOMEvents[type] = true;
+                util.bind(element, type, this);
             }
+
+            return this;
+        },
+
+        unbindDOMEvents: function () {
+            var type, element = this._element;
+
+            if (!element) {
+                return this;
+            }
+
+            for (type in this._DOMEvents) {
+                util.unbind(element, type, this);
+            }
+
+            this._DOMEvents = {};
 
             return this;
         }
@@ -581,7 +599,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         setProperty: function (name, value, options) {
-            var key, props = util.clone(this._props);
+            var key, props = this._props;
 
             if (name === null || util.isObject(name)) {
                 options = value || {};
@@ -627,7 +645,7 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            if (!this.hasProperty(name) || props[name] !== value) {
+            if (!util.isEqual(props[name], value)) {
                 this._props[name] = value;
 
                 if (!options.silent) {
