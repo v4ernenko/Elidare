@@ -76,7 +76,8 @@ Supported methods:
 
 - `getId()` Gets the unique identifier for the instance of this model.
 - `clone()` Creates a new model with identical properties to this one.
-- `reset([options])` Resets all properties on the model.
+- `clear([options])` Clear all properties on the model.
+- `reset([options])` Resets properties to default values.
 - `isValidPair(name, value)` Checks the given pair before insert or update. Override it with your own validation logic.
 - `getDefaults()` Returns default properties. Override this function when using default properties.
 - `hasProperty(name)` Returns `true` if the model has given property.
