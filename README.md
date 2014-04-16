@@ -35,6 +35,7 @@ Supported methods:
 - `setEnabled(enabled)` Sets or clears the `disabled` state on the view.
 - `handleEvent(DOMEvent)` Handles DOM events.
 - `bindDOMEvents(types)` Binds DOM events.
+- `unbindDOMEvents()` Unbinds DOM events.
 
 View inherits from Emitter, so all emitter methods apply.
 
@@ -76,7 +77,7 @@ Supported methods:
 - `getId()` Gets the unique identifier for the instance of this model.
 - `clone()` Creates a new model with identical properties to this one.
 - `reset([options])` Resets all properties on the model.
-- `isValidPair(key, value)` Checks the given pair before insert or update. Override it with your own validation logic.
+- `isValidPair(name, value)` Checks the given pair before insert or update. Override it with your own validation logic.
 - `getDefaults()` Returns default properties. Override this function when using default properties.
 - `hasProperty(name)` Returns `true` if the model has given property.
 - `getProperty([name])` Returns the value of a property or all properties if `name` is not passed.
@@ -133,6 +134,8 @@ myEmitter.emit('myEvent', 'Hello, world!');
 
 Each class has a static `extend` method and allows you to define your own classes. When a new instance is created, its `init` method is invoked automatically.
 
+Example:
+
 ```js
 var FocusableView = elidare.View.extend({
     init: function (params) {
@@ -146,10 +149,10 @@ var FocusableView = elidare.View.extend({
         this
             .on('blur', function () {
                 this.setFocused(false);
-            }, this)
+            })
             .on('focus', function () {
                 this.setFocused(true);
-            }, this)
+            })
             .bindDOMEvents('blur focus');
     },
 
