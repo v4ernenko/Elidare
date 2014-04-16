@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.2.0
+* @version 0.3.0
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -572,6 +572,10 @@ var elidare = (function (win, doc, undefined) {
 
         clone: function () {
             return new this.constructor(this._props);
+        },
+
+        clear: function (options) {
+            return this.setProperty(null, options);
         },
 
         reset: function (options) {
