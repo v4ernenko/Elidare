@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.0
+* @version 0.3.1
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -76,6 +76,22 @@ var elidare = (function (win, doc, undefined) {
             return {}.toString.call(value) === '[object Array]';
         },
 
+        getList: function (value) {
+            var key, list = [];
+
+            if (this.isArray(value)) {
+                list = value;
+            } else if (this.isObject(value)) {
+                for (key in value) {
+                    list.push(key);
+                }
+            } else if (this.isString(value)) {
+                list = this.trim(value).split(/\s+/);
+            }
+
+            return list;
+        },
+
         hasClass: function (element, name) {
             var value = element.className && this.trim(element.className);
 
@@ -103,7 +119,7 @@ var elidare = (function (win, doc, undefined) {
                 value,
                 result,
                 method,
-                isForce = typeof force !== 'undefined',
+                isForce = force !== undefined,
                 className,
                 classNames;
 
@@ -236,7 +252,6 @@ var elidare = (function (win, doc, undefined) {
                     var event = win.event;
 
                     event.target = event.srcElement || doc;
-
                     event.currentTarget = element;
 
                     event.preventDefault = function () {
@@ -366,16 +381,21 @@ var elidare = (function (win, doc, undefined) {
         },
 
         once: function (type, handler, context) {
-            var that = this;
+            var that = this,
+                onceHandler;
 
-            function onceHandler() {
+            if (!util.isFunction(handler)) {
+                return this;
+            }
+
+            onceHandler = function () {
                 that.off(type, onceHandler, context);
                 handler.apply(this, arguments);
-            }
+            };
 
             onceHandler.sourceHandler = handler;
 
-            this.on(type, onceHandler, context);
+            return this.on(type, onceHandler, context);
         },
 
         emit: function (type) {
@@ -508,7 +528,7 @@ var elidare = (function (win, doc, undefined) {
         bindDOMEvents: function (types) {
             var i,
                 type,
-                list = [],
+                list,
                 element = this._element,
                 DOMEvents = this._DOMEvents;
 
@@ -516,15 +536,7 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            if (util.isArray(types)) {
-                list = types;
-            } else if (util.isObject(types)) {
-                for (type in types) {
-                    list.push(type);
-                }
-            } else if (util.isString(types)) {
-                list = util.trim(types).split(/\s+/);
-            }
+            list = util.getList(types);
 
             for (i = 0; type = list[i]; i++) {
                 if (DOMEvents[type]) continue;
@@ -536,18 +548,25 @@ var elidare = (function (win, doc, undefined) {
             return this;
         },
 
-        unbindDOMEvents: function () {
-            var type, element = this._element;
+        unbindDOMEvents: function (types) {
+            var i,
+                type,
+                list,
+                element = this._element,
+                DOMEvents = this._DOMEvents;
 
             if (!element) {
                 return this;
             }
 
-            for (type in this._DOMEvents) {
+            list = util.getList(types || DOMEvents);
+
+            for (i = 0; type = list[i]; i++) {
+                if (!DOMEvents[type]) continue;
+
+                delete DOMEvents[type];
                 util.unbind(element, type, this);
             }
-
-            this._DOMEvents = {};
 
             return this;
         }
@@ -570,8 +589,8 @@ var elidare = (function (win, doc, undefined) {
             return this._id;
         },
 
-        clone: function () {
-            return new this.constructor(this._props);
+        clone: function (options) {
+            return new this.constructor(this._props, options);
         },
 
         clear: function (options) {
