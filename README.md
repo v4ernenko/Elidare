@@ -35,7 +35,7 @@ Supported methods:
 - `setEnabled(enabled)` Sets or clears the `disabled` state on the view.
 - `handleEvent(DOMEvent)` Handles DOM events.
 - `bindDOMEvents(types)` Binds DOM events.
-- `unbindDOMEvents()` Unbinds DOM events.
+- `unbindDOMEvents([types])` Unbinds DOM events.
 
 View inherits from Emitter, so all emitter methods apply.
 
@@ -75,7 +75,7 @@ This class is designed for organizing logical data structures.
 Supported methods:
 
 - `getId()` Gets the unique identifier for the instance of this model.
-- `clone()` Creates a new model with identical properties to this one.
+- `clone([options])` Creates a new model with identical properties to this one.
 - `clear([options])` Clear all properties on the model.
 - `reset([options])` Resets properties to default values.
 - `isValidPair(name, value)` Checks the given pair before insert or update. Override it with your own validation logic.
