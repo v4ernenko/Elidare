@@ -1,13 +1,16 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.1
+* @version 0.3.2
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
 
 var elidare = (function (win, doc, undefined) {
     'use strict';
+
+    var slice = [].slice,
+        toString = {}.toString;
 
     // Utilities
 
@@ -51,7 +54,7 @@ var elidare = (function (win, doc, undefined) {
         extend: function (target) {
             var prop,
                 item,
-                args = [].slice.call(arguments, 1);
+                args = slice.call(arguments, 1);
 
             for (var i = 0, n = args.length; i < n; i++) {
                 item = args[i];
@@ -73,7 +76,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         isArray: Array.isArray || function (value) {
-            return {}.toString.call(value) === '[object Array]';
+            return toString.call(value) === '[object Array]';
         },
 
         getList: function (value) {
@@ -401,17 +404,24 @@ var elidare = (function (win, doc, undefined) {
         emit: function (type) {
             var i,
                 item,
-                args = [].slice.call(arguments, 1),
-                handlers = this._handlers[type];
+                args = slice.call(arguments, 1),
+                handlers = this._handlers[type],
+                allHandlers = this._handlers['*'];
 
-            if (!handlers) {
-                return this;
+            if (type !== '*' && handlers) {
+                handlers = handlers.slice(0);
+
+                for (i = 0; item = handlers[i]; i++) {
+                    item.handler.apply(item.context || this, args);
+                }
             }
 
-            handlers = handlers.slice(0);
+            if (allHandlers) {
+                allHandlers = allHandlers.slice(0);
 
-            for (i = 0; item = handlers[i]; i++) {
-                item.handler.apply(item.context || this, args);
+                for (i = 0; item = allHandlers[i]; i++) {
+                    item.handler.apply(item.context || this, arguments);
+                }
             }
 
             return this;
@@ -633,8 +643,8 @@ var elidare = (function (win, doc, undefined) {
                     if (!options.silent) {
                         for (key in props) {
                             this
-                                .emit('change', key)
-                                .emit('change:' + key);
+                                .emit('change', key, undefined, options)
+                                .emit('change:' + key, undefined, options);
                         }
                     }
 
@@ -648,11 +658,11 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            if (!this.isValidPair(name, value)) {
-                return this.emit('invalid', name, value);
-            }
-
             options || (options = {});
+
+            if (!this.isValidPair(name, value)) {
+                return this.emit('invalid', name, value, options);
+            }
 
             if (util.isNullOrUndefined(value)) {
                 if (this.hasProperty(name)) {
@@ -660,8 +670,8 @@ var elidare = (function (win, doc, undefined) {
 
                     if (!options.silent) {
                         this
-                            .emit('change', name)
-                            .emit('change:' + name);
+                            .emit('change', name, undefined, options)
+                            .emit('change:' + name, undefined, options);
                     }
                 }
 
@@ -673,8 +683,8 @@ var elidare = (function (win, doc, undefined) {
 
                 if (!options.silent) {
                     this
-                        .emit('change', name, value)
-                        .emit('change:' + name, value);
+                        .emit('change', name, value, options)
+                        .emit('change:' + name, value, options);
                 }
             }
 
