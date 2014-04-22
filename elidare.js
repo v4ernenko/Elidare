@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.2
+* @version 0.3.3
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -55,6 +55,8 @@ var elidare = (function (win, doc, undefined) {
             var prop,
                 item,
                 args = slice.call(arguments, 1);
+
+            target = target || {};
 
             for (var i = 0, n = args.length; i < n; i++) {
                 item = args[i];
