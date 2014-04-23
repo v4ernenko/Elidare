@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.3
+* @version 0.3.4
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -120,13 +120,10 @@ var elidare = (function (win, doc, undefined) {
         })(),
 
         toggleClass: function (element, name, force) {
-            var i,
-                value,
-                result,
-                method,
-                isForce = force !== undefined,
-                className,
-                classNames;
+            var i, value,
+                result, method,
+                isForce = (force !== undefined),
+                className, classNames;
 
             if (isForce) {
                 force = !!force;
@@ -337,20 +334,36 @@ var elidare = (function (win, doc, undefined) {
         },
 
         on: function (type, handler, context) {
+            var i, key, list;
+
+            if (util.isObject(type)) {
+                for (key in type) {
+                    this.on(key, type[key]);
+                }
+
+                return this;
+            }
+
             if (!util.isFunction(handler)) {
                 return this;
             }
 
-            (this._handlers[type] = this._handlers[type] || []).push({
-                handler: handler,
-                context: context
-            });
+            list = util.getList(type);
+
+            for (i = 0; type = list[i]; i++) {
+                (this._handlers[type] = this._handlers[type] || []).push({
+                    handler: handler,
+                    context: context
+                });
+            }
 
             return this;
         },
 
         off: function (type, handler, context) {
-            var i, item, handlers;
+            var i, j, key,
+                item, list, handlers,
+                deleteType = arguments.length === 1;
 
             if (arguments.length === 0) {
                 this._handlers = {};
@@ -358,27 +371,39 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            handlers = this._handlers[type];
-
-            if (!handlers) {
-                return this;
-            }
-
-            if (arguments.length === 1) {
-                delete this._handlers[type];
+            if (util.isObject(type)) {
+                for (key in type) {
+                    this.off(key, type[key]);
+                }
 
                 return this;
             }
 
-            for (i = 0; item = handlers[i]; i++) {
-                if (
-                    item.context === context && (
-                        item.handler === handler ||
-                        item.handler.sourceHandler === handler
-                )) {
-                    handlers.splice(i, 1);
+            list = util.getList(type);
 
-                    break;
+            for (i = 0; type = list[i]; i++) {
+                handlers = this._handlers[type];
+
+                if (!handlers) {
+                    continue;
+                }
+
+                if (deleteType) {
+                    delete this._handlers[type];
+
+                    continue;
+                }
+
+                for (j = 0; item = handlers[j]; j++) {
+                    if (
+                        item.context === context && (
+                            item.handler === handler ||
+                            item.handler.sourceHandler === handler
+                    )) {
+                        handlers.splice(j, 1);
+
+                        break;
+                    }
                 }
             }
 
@@ -386,21 +411,35 @@ var elidare = (function (win, doc, undefined) {
         },
 
         once: function (type, handler, context) {
-            var that = this,
-                onceHandler;
+            var i, key, list, onceHandler;
+
+            if (util.isObject(type)) {
+                for (key in type) {
+                    this.once(key, type[key]);
+                }
+
+                return this;
+            }
 
             if (!util.isFunction(handler)) {
                 return this;
             }
 
-            onceHandler = function () {
-                that.off(type, onceHandler, context);
-                handler.apply(this, arguments);
-            };
+            list = util.getList(type);
 
-            onceHandler.sourceHandler = handler;
+            for (i = 0; type = list[i]; i++) {
+                onceHandler = (function (type, that) {
+                    return function onceHandler() {
+                        that.off(type, onceHandler, context);
+                        handler.apply(this, arguments);
+                    };
+                })(type, this);
 
-            return this.on(type, onceHandler, context);
+                onceHandler.sourceHandler = handler;
+                this.on(type, onceHandler, context);
+            }
+
+            return this;
         },
 
         emit: function (type) {
@@ -538,9 +577,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         bindDOMEvents: function (types) {
-            var i,
-                type,
-                list,
+            var i, type, list,
                 element = this._element,
                 DOMEvents = this._DOMEvents;
 
@@ -561,9 +598,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         unbindDOMEvents: function (types) {
-            var i,
-                type,
-                list,
+            var i, type, list,
                 element = this._element,
                 DOMEvents = this._DOMEvents;
 
