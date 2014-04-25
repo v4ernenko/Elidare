@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.5
+* @version 0.3.6
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -29,36 +29,24 @@ var elidare = (function (win, doc, undefined) {
 
         clone: function (value) {
             if (this.isArray(value)) {
-                var i, n = value.length, clone = [];
-
-                for (i = 0; i < n; i++) {
-                    clone[i] = this.clone(value[i]);
-                }
-
-                return clone;
+                return value.slice(0);
             }
 
             if (this.isObject(value)) {
-                var prop, clone = {};
-
-                for (prop in value) {
-                    clone[prop] = this.clone(value[prop]);
-                }
-
-                return clone;
+                return this.extend({}, value);
             }
 
             return value;
         },
 
         extend: function (target) {
-            var prop,
-                item,
+            var i, n, prop, item,
                 args = slice.call(arguments, 1);
 
+            n = args.length;
             target = target || {};
 
-            for (var i = 0, n = args.length; i < n; i++) {
+            for (i = 0; i < n; i++) {
                 item = args[i];
 
                 if (item) for (prop in item) {
@@ -170,11 +158,11 @@ var elidare = (function (win, doc, undefined) {
         },
 
         isObject: function (value) {
-            return value !== null && typeof value === 'object';
+            return typeof value === 'object' && value !== null;
         },
 
         isNumber: function (value) {
-            return !win.isNaN(value) && typeof value === 'number';
+            return typeof value === 'number' && !win.isNaN(value);
         },
 
         isFunction: function (value) {
@@ -627,11 +615,29 @@ var elidare = (function (win, doc, undefined) {
         },
 
         getProperty: function (name) {
+            var i, chunk = {}, list,
+                props = this._props;
+
             if (arguments.length === 0) {
-                return util.clone(this._props);
+                return util.clone(props);
             }
 
-            return this._props[name];
+            list = util.getList(name);
+
+            switch (list.length) {
+                case 0:
+                    return;
+
+                case 1:
+                    return props[list[0]];
+
+                default:
+                    for (i = 0; name = list[i]; i++) {
+                        chunk[name] = props[name];
+                    }
+
+                    return chunk;
+            }
         },
 
         setProperty: function (name, value, options) {
