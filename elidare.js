@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.6
+* @version 0.3.7
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -85,18 +85,6 @@ var elidare = (function (win, doc, undefined) {
             return list;
         },
 
-        hasClass: function (element, name) {
-            var value = element.className && this.trim(element.className);
-
-            if (!value) {
-                return false;
-            }
-
-            value = ' ' + value.replace(/\s+/g, ' ') + ' ';
-
-            return value.indexOf(' ' + name + ' ') >= 0;
-        },
-
         generateId: (function () {
             var index = 0;
 
@@ -106,52 +94,6 @@ var elidare = (function (win, doc, undefined) {
                 return prefix + ++index;
             };
         })(),
-
-        toggleClass: function (element, name, force) {
-            var i, value,
-                result, method,
-                isForce = (force !== undefined),
-                className, classNames;
-
-            if (isForce) {
-                force = !!force;
-            }
-
-            result = this.hasClass(element, name);
-
-            method = result ?
-                force !== true && 'remove'
-                :
-                force !== false && 'append';
-
-            if (method) {
-                value = this.trim(element.className);
-
-                classNames = value ? value.split(/\s+/) : [];
-
-                switch (method) {
-                    case 'append':
-                        classNames.push(name);
-
-                        break;
-
-                    case 'remove':
-                        for (i = 0; className = classNames[i]; i++) {
-                            if (className === name) {
-                                classNames.splice(i, 1);
-
-                                break;
-                            }
-                        }
-
-                        break;
-                }
-
-                element.className = classNames.join(' ');
-            }
-
-            return isForce ? force : !result;
-        },
 
         isString: function (value) {
             return typeof value === 'string';
@@ -278,6 +220,51 @@ var elidare = (function (win, doc, undefined) {
 
             win.attachEvent('onunload', detachAll);
         })();
+    }
+
+    if (doc.documentElement.classList) {
+        util.hasClass = function (element, name) {
+            return element.classList.contains(name);
+        };
+
+        util.toggleClass = function (element, name) {
+            return element.classList.toggle(name);
+        };
+    } else {
+        util.hasClass = function (element, name) {
+            var className = element.className && this.trim(element.className);
+
+            if (!className) {
+                return false;
+            }
+
+            className = ' ' + className.replace(/\s+/g, ' ') + ' ';
+
+            return className.indexOf(' ' + name + ' ') >= 0;
+        };
+
+        util.toggleClass = function (element, name) {
+            var i,
+                hasClass = this.hasClass(element, name),
+                className = this.trim(element.className),
+                classNames = className ? className.split(/\s+/) : [];
+
+            if (hasClass) {
+                for (i = 0; className = classNames[i]; i++) {
+                    if (className === name) {
+                        classNames.splice(i, 1);
+
+                        break;
+                    }
+                }
+            } else {
+                classNames.push(name);
+            }
+
+            element.className = classNames.join(' ');
+
+            return !hasClass;
+        };
     }
 
     // Base
@@ -458,7 +445,7 @@ var elidare = (function (win, doc, undefined) {
         hasState: function (name) {
             var element = this._element;
 
-            if (!element) {
+            if (!name || !element) {
                 return false;
             }
 
@@ -476,17 +463,17 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            if (!element) {
+            if (!name || !element) {
                 return this;
             }
 
             enable = !!enable;
 
-            if (this.hasState(name) === enable) {
+            if (enable === this.hasState(name)) {
                 return this;
             }
 
-            util.toggleClass(element, this._statePrefix + name, enable);
+            util.toggleClass(element, this._statePrefix + name);
 
             this
                 .emit('stateChanged', name, enable)
