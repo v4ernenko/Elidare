@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.7
+* @version 0.3.8
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -628,20 +628,15 @@ var elidare = (function (win, doc, undefined) {
         },
 
         setProperty: function (name, value, options) {
-            var key, props = this._props;
+            var key, changed,
+                props = util.clone(this._props);
 
             if (name === null || util.isObject(name)) {
                 options = value || {};
 
                 if (!name) {
-                    this._props = {};
-
-                    if (!options.silent) {
-                        for (key in props) {
-                            this
-                                .emit('change', key, undefined, options)
-                                .emit('change:' + key, undefined, options);
-                        }
+                    for (key in props) {
+                        this.setProperty(key, null, options);
                     }
 
                     return this;
@@ -661,27 +656,25 @@ var elidare = (function (win, doc, undefined) {
             }
 
             if (util.isNullOrUndefined(value)) {
-                if (this.hasProperty(name)) {
-                    delete this._props[name];
-
-                    if (!options.silent) {
-                        this
-                            .emit('change', name, undefined, options)
-                            .emit('change:' + name, undefined, options);
-                    }
+                if (!this.hasProperty(name)) {
+                    return this;
                 }
 
-                return this;
-            }
+                value = void value;
 
-            if (!util.isEqual(props[name], value)) {
+                delete this._props[name];
+
+                changed = true;
+            } else if (!util.isEqual(props[name], value)) {
                 this._props[name] = value;
 
-                if (!options.silent) {
-                    this
-                        .emit('change', name, value, options)
-                        .emit('change:' + name, value, options);
-                }
+                changed = true;
+            }
+
+            if (changed && !options.silent) {
+                this
+                    .emit('change', name, value, props[name], options)
+                    .emit('change:' + name, value, props[name], options);
             }
 
             return this;
