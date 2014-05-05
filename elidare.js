@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.3.8
+* @version 0.4.0
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -439,7 +439,7 @@ var elidare = (function (win, doc, undefined) {
 
             this._element = this._contentElement = null;
 
-            return this;
+            return this.emit('destroy');
         },
 
         hasState: function (name) {
@@ -453,7 +453,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         setState: function (name, enable) {
-            var key, element = this._element;
+            var key, hasState, element = this._element;
 
             if (util.isObject(name)) {
                 for (key in name) {
@@ -467,9 +467,11 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            enable = !!enable;
+            hasState = this.hasState(name);
 
-            if (enable === this.hasState(name)) {
+            enable = arguments.length < 2 ? !hasState : !!enable;
+
+            if (enable === hasState) {
                 return this;
             }
 
@@ -500,17 +502,31 @@ var elidare = (function (win, doc, undefined) {
             if (contentElement) {
                 contentElement.innerHTML = escapeHTML ?
                     util.escapeHTML(content) : content;
+
+                this.emit('contentChanged', content, escapeHTML);
             }
 
             return this;
         },
 
         setVisible: function (visible) {
-            return this.setState('hidden', !visible);
+            var args = ['hidden'];
+
+            if (arguments.length) {
+                args.push(!visible);
+            }
+
+            return this.setState.apply(this, args);
         },
 
         setEnabled: function (enabled) {
-            return this.setState('disabled', !enabled);
+            var args = ['disabled'];
+
+            if (arguments.length) {
+                args.push(!enabled);
+            }
+
+            return this.setState.apply(this, args);
         },
 
         handleEvent: function (DOMEvent) {
@@ -629,7 +645,7 @@ var elidare = (function (win, doc, undefined) {
 
         setProperty: function (name, value, options) {
             var key, changed,
-                props = util.clone(this._props);
+                props = this.getProperty();
 
             if (name === null || util.isObject(name)) {
                 options = value || {};
@@ -662,9 +678,7 @@ var elidare = (function (win, doc, undefined) {
 
                 value = void value;
 
-                delete this._props[name];
-
-                changed = true;
+                changed = delete this._props[name];
             } else if (!util.isEqual(props[name], value)) {
                 this._props[name] = value;
 
