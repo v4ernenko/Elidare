@@ -26,7 +26,7 @@ Supported methods:
 - `getId()` Gets the unique identifier for the instance of this view.
 - `destroy()` Removes the view's element from the DOM.
 - `hasState(name)` Returns `true` if the view is in the specified state, `false` otherwise.
-- `setState(name, enable)` Sets or clears the given state on the view.
+- `setState(name [, enable])` Sets or clears the given state on the view.
 - `isVisible()` Returns `false` if the view has a `hidden` state, `true` otherwise.
 - `isEnabled()` Returns `false` if the view has a `disabled` state, `true` otherwise.
 - `getElement()` Gets the view's element.
