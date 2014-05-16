@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.4.0
+* @version 0.5.0
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -57,12 +57,12 @@ var elidare = (function (win, doc, undefined) {
             return target;
         },
 
-        isEqual: Object.is || function (x, y) {
-            if (x === y) {
-                return x !== 0 || 1 / x === 1 / y;
+        isEqual: function (valueA, valueB) {
+            if (valueA === valueB) {
+                return valueA !== 0 || 1 / valueA === 1 / valueB;
             }
 
-            return x !== x && y !== y;
+            return valueA !== valueA && valueB !== valueB;
         },
 
         isArray: Array.isArray || function (value) {
@@ -309,20 +309,40 @@ var elidare = (function (win, doc, undefined) {
         },
 
         on: function (type, handler, context) {
+            var i, key, list, handlers = this._handlers;
+
+            if (util.isObject(type)) {
+                if (util.isArray(type)) {
+                    list = type;
+                } else {
+                    for (key in type) {
+                        this.on(key, type[key], handler);
+                    }
+
+                    return this;
+                }
+            }
+
             if (!util.isFunction(handler)) {
                 return this;
             }
 
-            (this._handlers[type] = this._handlers[type] || []).push({
-                handler: handler,
-                context: context
-            });
+            list = list || util.getList(type);
+
+            for (i = 0; type = list[i]; i++) {
+                (handlers[type] = handlers[type] || []).push({
+                    handler: handler,
+                    context: context
+                });
+            }
 
             return this;
         },
 
         off: function (type, handler, context) {
-            var i, item, handlers;
+            var i, j, key,
+                item, list, handlers,
+                deleteType = arguments.length === 1;
 
             if (arguments.length === 0) {
                 this._handlers = {};
@@ -330,27 +350,43 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            handlers = this._handlers[type];
+            if (util.isObject(type)) {
+                if (util.isArray(type)) {
+                    list = type;
+                } else {
+                    for (key in type) {
+                        this.off(key, type[key], handler);
+                    }
 
-            if (!handlers) {
-                return this;
+                    return this;
+                }
             }
 
-            if (arguments.length === 1) {
-                delete this._handlers[type];
+            list = list || util.getList(type);
 
-                return this;
-            }
+            for (i = 0; type = list[i]; i++) {
+                handlers = this._handlers[type];
 
-            for (i = 0; item = handlers[i]; i++) {
-                if (
-                    item.context === context && (
-                        item.handler === handler ||
-                        item.handler.sourceHandler === handler
-                )) {
-                    handlers.splice(i, 1);
+                if (!handlers) {
+                    continue;
+                }
 
-                    break;
+                if (deleteType) {
+                    delete this._handlers[type];
+
+                    continue;
+                }
+
+                for (j = 0; item = handlers[j]; j++) {
+                    if (
+                        item.context === context && (
+                            item.handler === handler ||
+                            item.handler.sourceHandler === handler
+                    )) {
+                        handlers.splice(j, 1);
+
+                        break;
+                    }
                 }
             }
 
@@ -358,43 +394,74 @@ var elidare = (function (win, doc, undefined) {
         },
 
         once: function (type, handler, context) {
-            var that = this,
-                onceHandler;
+            var i, key, list, onceHandler;
+
+            if (util.isObject(type)) {
+                if (util.isArray(type)) {
+                    list = type;
+                } else {
+                    for (key in type) {
+                        this.once(key, type[key], handler);
+                    }
+
+                    return this;
+                }
+            }
 
             if (!util.isFunction(handler)) {
                 return this;
             }
 
-            onceHandler = function () {
-                that.off(type, onceHandler, context);
-                handler.apply(this, arguments);
-            };
+            list = list || util.getList(type);
 
-            onceHandler.sourceHandler = handler;
+            for (i = 0; type = list[i]; i++) {
+                onceHandler = (function (type, that) {
+                    return function onceHandler() {
+                        that.off(type, onceHandler, context);
+                        handler.apply(this, arguments);
+                    };
+                })(type, this);
 
-            return this.on(type, onceHandler, context);
+                onceHandler.sourceHandler = handler;
+                this.on(type, onceHandler, context);
+            }
+
+            return this;
         },
 
         emit: function (type) {
-            var i,
-                item,
+            var i, j, key,
+                item, list, handlers,
                 args = slice.call(arguments, 1),
-                handlers = this._handlers[type],
                 allHandlers = this._handlers['*'];
 
-            if (type !== '*' && handlers) {
-                handlers = handlers.slice(0);
+            if (util.isObject(type)) {
+                if (util.isArray(type)) {
+                    list = type;
+                } else {
+                    for (key in type) {
+                        this.emit(key, type[key]);
+                    }
 
-                for (i = 0; item = handlers[i]; i++) {
-                    item.handler.apply(item.context || this, args);
+                    return this;
                 }
             }
 
-            if (allHandlers) {
-                allHandlers = allHandlers.slice(0);
+            list = list || util.getList(type);
 
-                for (i = 0; item = allHandlers[i]; i++) {
-                    item.handler.apply(item.context || this, arguments);
+            for (i = 0; type = list[i]; i++) {
+                handlers = this._handlers[type];
+
+                if (type !== '*' && handlers) {
+                    for (j = 0; item = handlers[j]; j++) {
+                        item.handler.apply(item.context || this, args);
+                    }
+                }
+
+                if (allHandlers) {
+                    for (j = 0; item = allHandlers[j]; j++) {
+                        item.handler.apply(item.context || this, [type].concat(args));
+                    }
                 }
             }
 
