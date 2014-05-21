@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.5.0
+* @version 0.5.1
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -109,15 +109,6 @@ var elidare = (function (win, doc, undefined) {
 
         isFunction: function (value) {
             return typeof value === 'function';
-        },
-
-        escapeHTML: function (value) {
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
         },
 
         isNullOrUndefined: function (value) {
@@ -563,14 +554,17 @@ var elidare = (function (win, doc, undefined) {
             return this._element;
         },
 
-        setContent: function (content, escapeHTML) {
+        setContent: function (content, asText) {
             var contentElement = this._contentElement;
 
             if (contentElement) {
-                contentElement.innerHTML = escapeHTML ?
-                    util.escapeHTML(content) : content;
+                if (asText) {
+                    contentElement.innerText = contentElement.textContent = content;
+                } else {
+                    contentElement.innerHTML = content;
+                }
 
-                this.emit('contentChanged', content, escapeHTML);
+                this.emit('contentChanged', content, asText);
             }
 
             return this;
