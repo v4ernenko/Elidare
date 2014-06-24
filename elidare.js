@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.6
+* @version 0.6.1
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -173,7 +173,7 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            if (!util.isFunction(handler)) {
+            if (!type || !util.isFunction(handler)) {
                 return this;
             }
 
@@ -236,7 +236,7 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            if (!util.isFunction(handler)) {
+            if (!type || !util.isFunction(handler)) {
                 return this;
             }
 
@@ -283,18 +283,18 @@ var elidare = (function (win, doc, undefined) {
     // View
 
     var View = Emitter.extend({
-        init: function (params) {
-            params = params || {};
+        init: function (options) {
+            options = options || {};
 
-            var element = this._element = params.element || doc.createElement('div');
+            var element = this._element = options.element || doc.createElement('div');
 
             this._id = element.id || util.generateId('vid');
             this._DOMEvents = {};
-            this._statePrefix = params.statePrefix || 'state-';
-            this._contentElement = params.contentElement || element;
+            this._statePrefix = options.statePrefix || 'state-';
+            this._contentElement = options.contentElement || element;
 
-            if (params.DOMEvents) {
-                this.bindDOMEvents(params.DOMEvents);
+            if (options.DOMEvents) {
+                this.bindDOMEvents(options.DOMEvents);
             }
         },
 

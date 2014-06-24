@@ -10,11 +10,11 @@ Elidare provides base classes for developing JavaScript applications:
 - __Model__
 - __Emitter__
 
-####View([params])
+####View([options])
 
 This class is designed for manipulating DOM elements.
 
-All params are optional. Supported params:
+Supported options:
 
 - `element` DOM element (default: `DIV`).
 - `DOMEvents` Whitespace-separated string, array or object of event types that are attached to the element.
@@ -30,7 +30,7 @@ Supported methods:
 - `isVisible()` Returns `false` if the view has a `hidden` state, `true` otherwise.
 - `isEnabled()` Returns `false` if the view has a `disabled` state, `true` otherwise.
 - `getElement()` Gets the view's element.
-- `setContent(content [, escapeHTML])` Sets the view's content. If `contentElement` is defined, content is rendered into it.
+- `setContent(content [, asText])` Sets the view's content. If `contentElement` is defined, content is rendered into it.
 - `setVisible(visible)` Sets or clears the `hidden` state on the view.
 - `setEnabled(enabled)` Sets or clears the `disabled` state on the view.
 - `handleEvent(DOMEvent)` Handles DOM events.
@@ -139,11 +139,11 @@ Example:
 
 ```js
 var FocusableView = elidare.View.extend({
-    init: function (params) {
-        params = params || {};
+    init: function (options) {
+        options = options || {};
 
         var element = this.getElement(),
-            tabIndex = params.tabIndex || 0;
+            tabIndex = options.tabIndex || 0;
 
         element.setAttribute('tabindex', tabIndex);
 
