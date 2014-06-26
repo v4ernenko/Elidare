@@ -1,7 +1,7 @@
 /**
 * @overview A library for building modular applications in JavaScript.
 * @license MIT
-* @version 0.6.1
+* @version 0.6.2
 * @author Vadim Chernenko
 * @see {@link https://github.com/v4ernenko/Elidare|Elidare source code repository}
 */
@@ -70,10 +70,14 @@ var elidare = (function (win, doc, undefined) {
             var key, list = [];
 
             if (this.isString(value)) {
-                list = this.trim(value).split(/\s+/);
-            } else if (this.isArray(value)) {
-                list = value;
-            } else if (this.isObject(value)) {
+                return this.trim(value).split(/\s+/);
+            }
+
+            if (this.isObject(value)) {
+                if (this.isArray(value)) {
+                    return value;
+                }
+
                 for (key in value) {
                     list.push(key);
                 }
@@ -331,7 +335,7 @@ var elidare = (function (win, doc, undefined) {
         },
 
         setState: function (name, enable) {
-            var key, hasState, element = this._element;
+            var key, has, element = this._element;
 
             if (util.isObject(name)) {
                 for (key in name) {
@@ -345,11 +349,10 @@ var elidare = (function (win, doc, undefined) {
                 return this;
             }
 
-            hasState = this.hasState(name);
+            has = this.hasState(name);
+            enable = arguments.length < 2 ? !has : !!enable;
 
-            enable = arguments.length < 2 ? !hasState : !!enable;
-
-            if (enable === hasState) {
+            if (enable === has) {
                 return this;
             }
 
@@ -415,7 +418,8 @@ var elidare = (function (win, doc, undefined) {
         },
 
         bindDOMEvents: function (types) {
-            var i, type, list,
+            var i, type,
+                n, list,
                 element = this._element,
                 DOMEvents = this._DOMEvents;
 
@@ -425,8 +429,12 @@ var elidare = (function (win, doc, undefined) {
 
             list = util.getList(types);
 
-            for (i = 0; type = list[i]; i++) {
-                if (DOMEvents[type]) continue;
+            for (i = 0, n = list.length; i < n; i++) {
+                type = list[i];
+
+                if (!type || DOMEvents[type]) {
+                    continue;
+                }
 
                 DOMEvents[type] = true;
                 util.bind(element, type, this);
@@ -436,7 +444,8 @@ var elidare = (function (win, doc, undefined) {
         },
 
         unbindDOMEvents: function (types) {
-            var i, type, list,
+            var i, type,
+                n, list,
                 element = this._element,
                 DOMEvents = this._DOMEvents;
 
@@ -446,7 +455,9 @@ var elidare = (function (win, doc, undefined) {
 
             list = util.getList(types || DOMEvents);
 
-            for (i = 0; type = list[i]; i++) {
+            for (i = 0, n = list.length; i < n; i++) {
+                type = list[i];
+
                 if (!DOMEvents[type]) continue;
 
                 delete DOMEvents[type];
@@ -499,7 +510,9 @@ var elidare = (function (win, doc, undefined) {
         },
 
         getProperty: function (name) {
-            var i, chunk = {}, list,
+            var i, n,
+                list,
+                chunk = {},
                 props = this._props;
 
             if (arguments.length === 0) {
@@ -516,7 +529,8 @@ var elidare = (function (win, doc, undefined) {
                     return props[list[0]];
 
                 default:
-                    for (i = 0; name = list[i]; i++) {
+                    for (i = 0, n = list.length; i < n; i++) {
+                        name = list[i];
                         chunk[name] = props[name];
                     }
 
